@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>NYT Strands Generator</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script>
+        $(function () {
+            $("#play").click(function () {
+                window.location.href += "?theme=" + $("#theme-name").val();
+            })
+            $("#lucky").click(function () {
+                window.location.href += "?theme=RANDOM";
+            })
+        });
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bevan:ital@0;1&family=Libre+Franklin:ital,wght@0,100..900;1,100..900&display=swap');
+
+        body {
+            background: #c0ddd9;
+            font-family: "Libre Franklin", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+        }
+
+        h1 {
+            font-family: "Bevan", serif;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        #container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #card {
+            text-align: center;
+        }
+
+        #description {
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+
+        #theme-name {
+            padding: .5em;
+            font-size: 1.1em;
+            border-radius: 10px;
+            border: 1px solid #bcbcbc;
+            min-width: 18em;
+        }
+
+        button {
+            background: black;
+            color: white;
+            padding: .8em 2em;
+            font-size: .9em;
+            border: 0px;
+            font-weight: 500;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="card">
+            <h1>Strands Generator</h1>
+            <p id="description">Find hidden words based around your chosen theme.</p>
+            <input id="theme-name" type="text" placeholder="Enter a theme" />
+            <br />
+            <br />
+            <button id="play">Play with theme</button>
+            <button id="lucky">I'm Feeling Lucky</button>
+            <p id="byline">Made by <a style="text-decoration: none" href="https://fadileledath.com">Fadil Eledath</a>.</p>
+        </div>
+    </div>
+</body>
+
+</html>

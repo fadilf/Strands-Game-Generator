@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>NYT Strands Generator</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script>
+        $(function () {
+            let grid = {GRID_HERE};
+
+            let letterCoords = {LETTER_COORDS_HERE};
+
+            let spangramIdx = {SPANGRAM_IDX_HERE};
+
+            function deltaToAngle(xDiff, yDiff) {
+                let diffs = [
+                    [-135, -90, -45],
+                    [180, 0, 0],
+                    [135, 90, 45]
+                ];
+                return diffs[yDiff + 1][xDiff + 1];
+            }
+
+            let letterCoordsStr = [];
+            letterCoords.forEach((word) => {
+                letterCoordsStr.push(word.toString());
+            })
+
+            grid.forEach((rowArr, row) => {
+                let rowHTML = "<div class='row'>";
+                rowArr.forEach((element, col) => {
+                    rowHTML += "<button row='" + row + "' col='" + col + "'><div class='line'></div>" + element + "</button>";
+                });
+                rowHTML += "</div>";
+                $("#game").append(rowHTML);
+            });
+
+            let word = [];
+            let wordsFound = 0;
+            $("#words-total").html(letterCoords.length);
+
+            function resetCurWordProgress() {
+                word = [];
+                $("#game button.selected").removeClass(["selected", "first"]);
+                $("#indicator").html("");
+                $("#indicator").css("color", "black");
+            }
+
+            $("#game button").click(function () {
+                let newRow = $(this).attr("row");
+                let newCol = $(this).attr("col");
+
+                if ($(this).hasClass("found")) {
+                    return;
+                }
+                $("#indicator").css("color", "black");
+
+                if (word.length == 0) { // Starting from scratch
+                    word.push([newRow, newCol]);
+                    $(this).addClass(["selected", "first"]);
+                    $("#indicator").html($(this).text());
+                } else {
+                    let lastLetter = word[word.length - 1];
+                    let xDiff = lastLetter[1] - newCol;
+                    let yDiff = lastLetter[0] - newRow;
+
+                    if ((xDiff == 0) && (yDiff == 0)) { // Submitting selection
+                        foundIdx = letterCoordsStr.indexOf(word.toString());
+                        if (foundIdx == -1) {
+                            resetCurWordProgress();
+                        } else {
+                            word = [];
+                            if (foundIdx == spangramIdx) {
+                                $(".selected").addClass(["found", "spangram"]).removeClass("selected");
+                                $("#indicator").css("color", "#f8cb2c");
+                                $("#indicator").html("SPANGRAM");
+                            } else {
+                                $(".selected").addClass("found").removeClass("selected");
+                            }
+                            wordsFound++;
+                            if (wordsFound == letterCoords.length) {
+                                $("#indicator").css("color", "#f8cb2c");
+                                $("#indicator").html("YOU WIN!");
+                            }
+                        }
+
+                    } else if ($(this).hasClass("selected")) { // Do nothing
+
+                    } else if (Math.max(Math.abs(xDiff), Math.abs(yDiff)) <= 1) { // Continuing word
+                        $("#indicator").append($(this).text());
+                        word.push([newRow, newCol]);
+                        let angle = deltaToAngle(xDiff, yDiff);
+                        $(this).children(".line").css("transform", "rotate(" + angle + "deg) translateX(1.85em)")
+                        $(this).addClass("selected");
+
+                    } else { // Ditching last word, starting new word
+                        resetCurWordProgress();
+                        $("#indicator").append($(this).text());
+                        word.push([newRow, newCol]);
+                        $(this).addClass(["selected", "first"]);
+                    }
+                }
+                $("#words-found").html(wordsFound);
+            });
+        });
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,100..900;1,100..900&display=swap');
+
+        body {
+            font-family: "Libre Franklin", sans-serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+        }
+
+        #container {
+            display: flex;
+            max-width: 60em;
+            margin: 0 auto;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        #game {
+            margin: 2em auto;
+            text-align: center;
+        }
+
+        #game button {
+            border-radius: 50%;
+            height: 2em;
+            width: 2em;
+            margin: .3em;
+            font-size: 1.5em;
+            font-weight: 500;
+            border: 0;
+            text-transform: uppercase;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        #game button.selected {
+            background: #dbd8c5;
+        }
+
+        #game button.found {
+            background: #aedfee;
+        }
+
+        #game button.spangram {
+            background: #f8cb2c;
+        }
+
+        #game button .line {
+            position: absolute;
+            height: .5em;
+            width: 2em;
+            margin-left: -.17em;
+            margin-top: .35em;
+            z-index: -1;
+        }
+
+        #game button.selected:not(.first) .line {
+            background: #dbd8c5;
+        }
+
+        #game button.found:not(.first) .line {
+            background: #aedfee;
+        }
+
+        #game button.spangram:not(.first) .line {
+            background: #f8cb2c;
+        }
+
+        #indicator {
+            text-transform: uppercase;
+            display: block;
+            min-height: 2em;
+        }
+
+        #theme-card {
+            width: 20em;
+            border: 1px solid #bcbcbc;
+            text-align: center;
+            border-radius: 10px;
+            overflow-y: hidden;
+            font-size: 1.2em;
+            padding-bottom: .7em;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+        
+        #theme-card-header {
+            background: #aedfee;
+            font-size: .7em;
+            margin-bottom: .7em;
+            padding: .3em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        #progress-indicator {
+            margin-top: 1em;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        #words-found, #words-total {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="left-col">
+            <div id="theme-card">
+                <div id="theme-card-header">CHOSEN THEME</div>
+                {CHOSEN_THEME_HERE}
+            </div>
+            <div id="progress-indicator">
+                <span id="words-found">0</span> of <span id="words-total"></span> theme words found.
+            </div>
+            <p style="text-align: center"><a style="text-decoration: none" href="/">Try a new theme.</a></p>
+        </div>
+        <div id="game">
+            <h2 id="indicator"></h2>
+        </div>
+    </div>
+</body>
+
+</html>
