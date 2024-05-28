@@ -91,7 +91,7 @@
                                 $("#indicator").html("TOO SHORT");
                             } else {
                                 // Incorrect valid submission, move closer to unlocking hint
-                                $("#indicator").html("INCORRECT");
+                                $("#indicator").html("NOT IN PUZZLE");
                                 if ((hintProgress < 3) & (wordsLeft.indexOf(hinted) == -1)) {
                                     hintProgress += 1;
                                     $("#hint-btn").addClass("step-" + hintProgress);

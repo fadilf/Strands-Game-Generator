@@ -1,46 +1,58 @@
-from FlagEmbedding import FlagModel
+# from FlagEmbedding import FlagModel
+import requests
 import pickle
 from scipy.spatial import KDTree
 import random
 import numpy as np
 import itertools
+from dotenv import dotenv_values
+
+config = dotenv_values(".env")
+
+def generate_n_cont_set(word, n):
+    n_letters_word = set()
+    for i in range(len(word) - n + 1):
+        n_letters_word.add(word[i:i+n])
+    return n_letters_word
+
+def rotate_grid(grid):
+    return [[tuple(item) for item in row] for row in np.rot90(np.array(grid))]
+
+class Model:
+    API_URL = "https://api-inference.huggingface.co/models/BAAI/bge-small-en-v1.5"
+    API_TOKEN = config["API_TOKEN"]
+    headers = {"Authorization": f"Bearer {API_TOKEN}"}
+    def encode(self, payload):
+        response = requests.post(self.API_URL, headers=self.headers, json=payload)
+        return np.array(response.json(), dtype=np.float32)
+model = Model()
+# model = FlagModel('BAAI/bge-small-en-v1.5',
+#                 query_instruction_for_retrieval="Generate a representation for this word for retrieving related words:",
+#                 use_fp16=True)
+
+with open("google-10000-english-no-swears.txt") as f:
+    all_words = f.readlines()
+
+words = []
+for word in all_words:
+    word_filtered = word.strip()
+    if len(word_filtered) > 3:
+        words.append(word_filtered)
+
+lens = {}
+for word in words:
+    word_len = len(word)
+    if word_len not in lens:
+        lens[word_len] = 1
+    else:
+        lens[word_len] += 1
+
+with open("embeddings.pkl", "rb") as f:
+    embeddings = pickle.load(f)
+
+tree = KDTree(embeddings)
 
 def generator(query:str=None):
-
-    def generate_n_cont_set(word, n):
-        n_letters_word = set()
-        for i in range(len(word) - n + 1):
-            n_letters_word.add(word[i:i+n])
-        return n_letters_word
-
-    def rotate_grid(grid):
-        return [[tuple(item) for item in row] for row in np.rot90(np.array(grid))]
-
-    model = FlagModel('BAAI/bge-small-en-v1.5',
-                    query_instruction_for_retrieval="Generate a representation for this word for retrieving related words:",
-                    use_fp16=True)
-
-    with open("google-10000-english-no-swears.txt") as f:
-        all_words = f.readlines()
-
-    words = []
-    for word in all_words:
-        word_filtered = word.strip()
-        if len(word_filtered) > 3:
-            words.append(word_filtered)
-
-    lens = {}
-    for word in words:
-        word_len = len(word)
-        if word_len not in lens:
-            lens[word_len] = 1
-        else:
-            lens[word_len] += 1
-
-    with open("embeddings.pkl", "rb") as f:
-        embeddings = pickle.load(f)
-
-    tree = KDTree(embeddings)
 
     if query is None:
         query = random.choice(words)
@@ -52,13 +64,17 @@ def generator(query:str=None):
 
     # Choose spangrammables
     spangrammable = []
-    for i in ii:
+    spangram_weights = []
+    for weight, i in zip(dd, ii):
         candidate = words[i].strip()
         candidate_alpha_only = "".join([char for char in candidate if char.isalpha()])
         if 6 <= len(candidate_alpha_only) <= 13:
             spangrammable.append(candidate)
+            spangram_weights.append(weight ** 60)
 
-    spangram = random.choice(spangrammable[:100])
+    spangram_weights = spangram_weights[:100]
+    spangram_weights /= sum(spangram_weights)
+    spangram = random.choices(spangrammable[:100], spangram_weights, k=1)[0]
 
     subembeddings = [embeddings[i] for i in ii]
     subwords = [words[i] for i in ii]
@@ -70,7 +86,8 @@ def generator(query:str=None):
     candidates: list[str] = []
     n = 4
     candidate_n_cont_pool: set[str] = set()
-    for i in iii:
+    candidate_weights = {}
+    for weight, i in zip(ddd, iii):
         word = subwords[i].strip().lower()
         word_set = generate_n_cont_set(word, n)
         unique = True
@@ -81,6 +98,7 @@ def generator(query:str=None):
         if unique:
             candidates.append(word)
             candidate_n_cont_pool.update(word_set)
+            candidate_weights[word] = weight ** 60
 
     # Separate the candidates into plain words and phrases
     plain_words = []
@@ -96,10 +114,6 @@ def generator(query:str=None):
     plain_lengths = [len(plain_word) for plain_word in plain_words]
 
     spangram = "".join([char for char in spangram if char.isalpha()])
-
-    max_words = (48 - len(spangram))//4
-
-    num_words = random.choice(list(range(6, max_words + 1)))
 
     budget = 48 - len(spangram)
 
@@ -135,7 +149,9 @@ def generator(query:str=None):
 
     chosen_words = [spangram]
     for length in chosen:
-        chosen_word = random.choice(word_lens[length])
+        weights = [candidate_weights[word] for word in word_lens[length]]
+        weights /= sum(weights)
+        chosen_word = random.choices(word_lens[length], weights, k=1)[0]
         word_lens[length].remove(chosen_word)
         chosen_words.append(chosen_word)
 
