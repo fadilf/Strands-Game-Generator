@@ -24,8 +24,10 @@
             }
 
             let letterCoordsStr = [];
-            letterCoords.forEach((word) => {
+            let wordsLeft = [];
+            letterCoords.forEach((word, idx) => {
                 letterCoordsStr.push(word.toString());
+                wordsLeft.push(idx);
             })
 
             grid.forEach((rowArr, row) => {
@@ -39,6 +41,8 @@
 
             let word = [];
             let wordsFound = 0;
+            let hintProgress = 0;
+            let hinted = -1;
             $("#words-total").html(letterCoords.length);
 
             function resetCurWordProgress() {
@@ -47,6 +51,18 @@
                 $("#indicator").html("");
                 $("#indicator").css("color", "black");
             }
+
+            $("#hint-btn").click(function(){
+                if ($(this).hasClass("step-3")) {
+                    let randomWordIdx = wordsLeft[Math.floor(Math.random() * wordsLeft.length)];
+                    hinted = randomWordIdx;
+                    letterCoords[randomWordIdx].forEach((coord) => {
+                        $("button[row=" + coord[0] + "][col=" + coord[1] + "]").addClass("hint");
+                    });
+                    hintProgress = 0;
+                    $("#hint-btn").removeClass(["step-1", "step-2", "step-3"]);
+                }
+            });
 
             $("#game button").click(function () {
                 let newRow = $(this).attr("row");
@@ -69,7 +85,18 @@
                     if ((xDiff == 0) && (yDiff == 0)) { // Submitting selection
                         foundIdx = letterCoordsStr.indexOf(word.toString());
                         if (foundIdx == -1) {
+                            let wordLen = word.length;
                             resetCurWordProgress();
+                            if (wordLen < 4) {
+                                $("#indicator").html("TOO SHORT");
+                            } else {
+                                // Incorrect valid submission, move closer to unlocking hint
+                                $("#indicator").html("INCORRECT");
+                                if ((hintProgress < 3) & (wordsLeft.indexOf(hinted) == -1)) {
+                                    hintProgress += 1;
+                                    $("#hint-btn").addClass("step-" + hintProgress);
+                                }
+                            }
                         } else {
                             word = [];
                             if (foundIdx == spangramIdx) {
@@ -79,10 +106,13 @@
                             } else {
                                 $(".selected").addClass("found").removeClass("selected");
                             }
+                            wordsLeft.splice(wordsLeft.indexOf(foundIdx), 1);
+                            console.log(wordsLeft);
                             wordsFound++;
                             if (wordsFound == letterCoords.length) {
                                 $("#indicator").css("color", "#f8cb2c");
                                 $("#indicator").html("YOU WIN!");
+                                $("#hint-btn").css("display", "none");
                             }
                         }
 
@@ -153,6 +183,10 @@
             background: #f8cb2c;
         }
 
+        #game button.hint:not(.found) {
+            border: 3px dashed #49a8c6;
+        }
+
         #game button .line {
             position: absolute;
             height: .5em;
@@ -191,7 +225,7 @@
             font-weight: 700;
             text-transform: capitalize;
         }
-        
+
         #theme-card-header {
             background: #aedfee;
             font-size: .7em;
@@ -210,6 +244,36 @@
         #words-found, #words-total {
             font-weight: bold;
         }
+
+        #hint-btn {
+            display: inline-block;
+            margin-top: 1.2em;
+            border-radius: 50px;
+            padding: .5em 3em;
+            font-size: .8em;
+            font-weight: 500;
+            border: 2px solid #cfcfcf;
+            color: #cfcfcf;
+            background: white;
+        }
+
+        #hint-btn.step-1 {
+            color: #cfcfcf;
+            background: linear-gradient(to right, #d8d8c5, #d8d8c5 33%, white 33%);
+        }
+
+        #hint-btn.step-2 {
+            color: black;
+            border-color: black;
+            background: linear-gradient(to right, #d8d8c5, #d8d8c5 66%, white 33%);
+        }
+
+        #hint-btn.step-3 {
+            color: white;
+            border-color: black;
+            background: black;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -222,6 +286,8 @@
             </div>
             <div id="progress-indicator">
                 <span id="words-found">0</span> of <span id="words-total"></span> theme words found.
+                <br />
+                <button id="hint-btn">Hint</button>
             </div>
             <p style="text-align: center"><a style="text-decoration: none" href="/">Try a new theme.</a></p>
         </div>

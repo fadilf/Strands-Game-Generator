@@ -1,4 +1,3 @@
-
 from FlagEmbedding import FlagModel
 import pickle
 from scipy.spatial import KDTree
