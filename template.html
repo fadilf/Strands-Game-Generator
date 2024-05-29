@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NYT Strands Generator</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -273,6 +274,28 @@
             border-color: black;
             background: black;
             cursor: pointer;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                font-size: 0.9em;
+            }
+            #container {
+                flex-direction: column;
+            }
+            #indicator {
+                margin: -0.3em;
+            }
+            #hint-btn {
+                margin-top: 1em;
+            }
+            #progress-indicator {
+                margin-top: 1em;
+                font-size: 1.2em;
+            }
+            #game {
+                margin: 1.5em auto;
+            }
         }
     </style>
 </head>
