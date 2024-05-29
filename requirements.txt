@@ -1,2 +1,5 @@
 # FlagEmbedding
 flask
+python-dotenv
+scipy
+requests
