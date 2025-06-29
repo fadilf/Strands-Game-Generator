@@ -23,8 +23,8 @@ class Model:
     API_TOKEN = config["API_TOKEN"]
     headers = {"Authorization": f"Bearer {API_TOKEN}"}
     def encode(self, payload):
-        response = requests.post(self.API_URL, headers=self.headers, json=payload)
-        return np.array(response.json(), dtype=np.float32)
+        response = requests.post(self.API_URL, headers=self.headers, json={"inputs":[payload]})
+        return np.array(response.json()[0], dtype=np.float32)
 model = Model()
 # model = FlagModel('BAAI/bge-small-en-v1.5',
 #                 query_instruction_for_retrieval="Generate a representation for this word for retrieving related words:",
